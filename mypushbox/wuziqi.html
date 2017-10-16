@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <style>
+        .canvas {
+            display: block;
+            margin: 20px auto 50px;
+            box-shadow: -2px -2px 2px #EFEFEF, 5px 5px 5px #B9B9B9;
+            cursor: pointer;
+        }
+
+        #wrap {
+            margin: 20px auto 50px;
+            width: 800px;
+            height: 800px;
+            position: relative;
+            z-index: 0
+        }
+        /* #wrap div {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+        } */
+
+        #mybg p {
+            color: white;
+            font-size: 50px;
+            position: relative;
+            margin: 200px;
+            text-align: center;
+        }
+
+        .refresh {
+            height: 40px;
+            width: 100px;
+            font-size: 50px;
+            position: relative;
+            margin: auto;
+            background: url("img/refresh.png");
+        }
+
+        #option {
+            margin: 20px auto 50px;
+            width: 800px;
+            height: 40px;
+            position: relative;
+            z-index: 0
+        }
+
+        #regret {
+            background: url("img/regret.png");
+            float: left;
+            width: 100px;
+            height: 40px;
+        }
+
+        #refresh {
+            background: url("img/refresh.png");
+            width: 100px;
+            height: 40px;
+            float: right;
+            margin: 0;
+        }
+
+        #chat {
+            float: left;
+            margin-left: 100px;
+            width: 400px;
+            height: 70px;
+            border-radius: 10px;
+            /* border:1px solid #00F; */
+            overflow-y: scroll;
+        }
+    </style>
+    <!-- <div id="wrap"> -->
+    <canvas class="canvas" id="canvas" width="800px" height="800px"></canvas>
+    <div id="option">
+        <div id="regret" onclick="gameRegret()"></div>
+        <!-- <div id="chat"></div> -->
+        <div id="refresh" onclick="gameRefresh()"></div>
+    </div>
+    <!-- </div> -->
+    <script type="text/javascript" src="./socket.io.js"></script>
+    <script>
+        var socket = io.connect('192.168.0.107:8089')
+        window.onload = function () {
+            Game.drawLine(16, 16);
+            playGame();
+        }
+        var Game = {
+            //记录最后一步的数组
+            lastDiv: [],
+            //记录所有步数的棋盘画布
+            lastStep: [],
+            //选中的样式线条数组
+            step: [],
+            //主色
+            mainColor: "black",
+            //棋盘行数数据
+            size: undefined,
+            //线条数
+            boardX: 0,
+            //线条数
+            boardY: 0,
+            //布局的二维数组
+            layoutArr: [],
+            //记录没有选中高光的棋盘
+            uncheck: undefined,
+            //是否下棋
+            isSet: true,
+            //棋盘格数
+            frame: 256,
+            //棋盘对象
+            chess: document.getElementById("canvas"),
+            //画棋盘线
+            drawLine: function (x, y) {
+                var This = Game;
+                //布局div
+                This.layout(x, y);
+                This.setBackground(x, y, "canvas");
+            },
+
+            setBackground: function (x, y, idName) {
+                var chess = document.getElementById(idName);
+                chess.setAttribute("width", x * 50 + "px");
+                chess.setAttribute("height", y * 50 + "px")
+                var This = Game;
+                var oImg = new Image();
+                oImg.src = "img/background.png";
+                var coordinate = { x: { x: 25, y: 25 }, y: { x: x * 50 - 25, y: 25 }, z: { x: 25, y: y * 50 - 25 } };
+                //获取画布环境
+                var context = chess.getContext("2d");
+                oImg.onload = function () {
+                    context.drawImage(oImg, 0, 0, x * 50, y * 50);
+                    draw(coordinate.x, coordinate.y, coordinate.z, x)
+                }
+                function draw(x, y, z, num) {
+                    debugger
+                    var This = Game;
+                    console.log(This.chess)
+                    //获取画布环境
+                    var context = chess.getContext("2d");
+                    context.strokeStyle = "#000000";//画笔颜色
+                    for (var i = 0; i < num; i++) {
+                        context.moveTo(x.x, i * 50 + x.y);
+                        context.lineTo(y.x, i * 50 + y.y);
+                        context.stroke();
+                        context.moveTo(x.x + i * 50, x.y);
+                        context.lineTo(z.x + i * 50, z.y);
+                        context.stroke();
+                    }
+                }
+            },
+
+            //布局div
+            layout: function (x, y) {
+                var This = Game;
+                for (var i = 0; i < x * y; i++) {
+                    This.layoutArr.push({ x: i % x, y: parseInt(i / x), color: 0 })
+                }
+                This.frame = x * y;
+                This.size = { x: x, y: y };
+                This.boardX = x - 1;
+                This.boardY = y - 1;
+                for (var i = 0; i < This.frame; i++) {
+                    This.layoutArr.push({ x: i % x, y: parseInt(i / x) });
+                }
+            },
+
+            regret: function (isActive) {
+                var bg = document.getElementById("mybg");
+                if (isActive) {
+                    Game.isSet = false;
+                }
+                if (bg == null) {
+                    var This = Game;
+                    //删除并返回最后一个元素
+                    if (!Game.isSet) {
+                        var reChess = This.lastDiv.pop();
+                        if (reChess !== undefined) {
+                            This.lastDiv[reChess] = 0;
+                            This.isSet = !This.isSet;
+                            var context = This.chess.getContext("2d");
+                            context.putImageData(This.lastStep.pop(), 0, 0)
+                        }
+                    }
+                }
+                if (!isActive) {
+                    Game.isSet = true;
+                }
+
+                // var reChess = This.step[This.step.length-1];
+            },
+
+            regretNotice: function (data) {
+                var firm = confirm(data.notice);
+                if (firm) {
+                    if (data.regret) {
+                        socket.emit('sendRegretCommond');
+                        Game.regret(true);
+                    } else {
+                        socket.emit('sendRefreshCommond');
+                        Game.refresh();
+                    }
+                } else {
+                    socket.emit('sendNotice', '老子不依');
+                }
+            },
+
+            refresh: function () {
+                var This = Game;
+                var white = document.getElementsByClassName("white");
+                var black = document.getElementsByClassName("black");
+                var whiteList = white.length;
+                var blackList = black.length;
+                for (var i = 0; i < whiteList; i++) {
+                    white[0].className = "";
+                }
+                for (var i = 0; i < blackList; i++) {
+                    black[0].className = "";
+                }
+                var context = This.chess.getContext("2d");
+                context.putImageData(This.lastStep[0], 0, 0)
+                var This = Game;
+                This.lastDiv = [];
+                This.lastStep = [];
+                This.step = [];
+                This.isSet = true;
+            },
+
+            pcSetChess: function (x, y, sendColor, isActive) {
+                var This = Game;
+                var divX = This.boardX - x;
+                var divY = This.boardY - y;
+                if (This.layoutArr[x + y * This.size.x].color == 0) {
+                    var context = This.chess.getContext("2d");
+                    This.lastStep.push(context.getImageData(0, 0, This.size.x * 50, This.size.y * 50));
+                    context.beginPath();
+                    context.arc(25 + x * 50, 25 + y * 50, 23, 0, 2 * Math.PI);
+                    var g = context.createRadialGradient(25 + x * 50, 25 + y * 50, 23, 25 + x * 50, 25 + y * 50, 0);
+                    if (This.uncheck != undefined) {
+                        context.putImageData(This.uncheck, 0, 0)
+                    }
+                    setChess(sendColor);
+                    This.lastDiv.push(x + y * This.size.x);
+                    if (isActive) {
+                        This.isSet = false;
+                        socket.emit('sendCommond', { x: divX, y: divY, color: This.mainColor });
+                        //这边应该有一个把棋子坐标发送到另外一个棋盘上的动作
+                    } else {
+                        This.isSet = true;
+                    }
+                    context.fillStyle = g;
+                    context.fill();
+                    context.closePath();
+                    This.uncheck = context.getImageData(0, 0, This.size.x * 50, This.size.x * 50);
+                    selected();
+                    This.outcome(sendColor, x, y, This.layoutArr[x + y * This.size.x].color)
+                }
+                function setChess(color) {
+                    if (color === "black") {
+                        g.addColorStop(0, "#0A0A0A");//黑棋
+                        g.addColorStop(1, '#636766');
+                        This.layoutArr[x + y * This.size.x].color = 1;
+                    } else if (color === "white") {
+                        g.addColorStop(0, '#D1D1D1');//白棋
+                        g.addColorStop(1, '#F9F9F9');
+                        This.layoutArr[x + y * This.size.x].color = 2;
+                    }
+                }
+
+                function selected() {
+                    This.step = [];
+                    This.step.push({ move: { x: x * 50, y: y * 50 }, line: { x: x * 50 + 50, y: y * 50 } });
+                    This.step.push({ move: { x: x * 50, y: y * 50 + 50 }, line: { x: x * 50 + 50, y: y * 50 + 50 } });
+                    This.step.push({ move: { x: x * 50, y: y * 50 }, line: { x: x * 50, y: y * 50 + 50 } });
+                    This.step.push({ move: { x: x * 50 + 50, y: y * 50 }, line: { x: x * 50 + 50, y: y * 50 + 50 } });
+                    context.beginPath();
+                    context.strokeStyle = "#FF0000";
+                    context.lineWidth = 2;
+                    context.setLineDash([15, 20]);
+                    This.step.forEach(function (element) {
+                        context.moveTo(element.move.x, element.move.y);
+                        context.lineTo(element.line.x, element.line.y);
+                        context.stroke();
+                    }, this);
+                }
+            },
+
+            outcome: function (sendColor, x, y, color) {
+                var This = Game;
+                var num = 0;
+                var chessman = [];
+                for (var i = 0; i < This.layoutArr.length; i++) {
+                    if (This.layoutArr[i].color != color) {
+                        continue;
+                    }
+                    if ((This.layoutArr[i].y === y || This.layoutArr[i].x === x || This.layoutArr[i].x + This.layoutArr[i].y === x + y || This.layoutArr[i].x - x === This.layoutArr[i].y - y) && This.layoutArr[i].x - x < 5 && This.layoutArr[i].x - x > -5 && This.layoutArr[i].y - y < 5 && This.layoutArr[i].y - y < 5) {
+                        chessman.push(This.layoutArr[i]);
+                    }
+                }
+                num = chessman.length
+                if (num > 4) {
+                    for (var j = 0; j < num; j++) {
+                        var judge1 = 0; var judge2 = 0; var judge3 = 0; var judge4 = 0;
+                        for (var z = j; z < num - 1; z++) {
+                            if (chessman[z + 1].x - chessman[j].x < 5 && chessman[z + 1].y === y && chessman[j].y === y) {
+                                judge1++;
+                                if (judge1 > 3) {
+                                    This.mask(sendColor);
+                                    break;
+                                }
+                            }
+                            if (chessman[z + 1].y - chessman[j].y < 5 && chessman[z + 1].x === x && chessman[j].x === x) {
+                                judge2++;
+                                if (judge2 > 3) {
+                                    This.mask(sendColor);
+                                    break;
+                                }
+                            }
+                            if (chessman[z + 1].y - chessman[j].y < 5 && chessman[z + 1].x + chessman[z + 1].y === x + y && chessman[j].x + chessman[j].y === x + y) {
+                                judge3++;
+                                if (judge3 > 3) {
+                                    This.mask(sendColor);
+                                    break;
+                                }
+                            }
+                            if (chessman[z + 1].y - chessman[j].y < 5 && chessman[z + 1].x - x === chessman[z + 1].y - y && chessman[j].x - x === chessman[j].y - y) {
+                                judge4++;
+                                if (judge4 > 3) {
+                                    This.mask(sendColor);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+
+            mask: function (color) {
+                var This = Game;
+                var context = This.chess.getContext("2d");
+                var oImg = new Image();
+
+                if (color === This.mainColor) {
+                    oImg.src = 'img/smallwin.png';
+                    // context.fillText("You Win", 100, This.boardY * 40 / 2);
+                } else {
+                    oImg.src = 'img/smallfail.png';
+                    // context.fillText("You Lose", 100, This.boardY * 40 / 2);
+                }
+                oImg.onload = function () {
+                    context.drawImage(oImg, (This.size.x * 50 - 330) / 2, (This.size.y * 50 - 342) / 2)
+                }
+                This.isSet = false;
+            },
+
+            getClass: function (className) {
+                return document.getElementsByClassName(className);
+            }
+        }
+
+        function playGame() {
+            Game.chess.onmousedown = function (ev) {
+                var ev = ev || ev.event;
+                var s = ev.clientX - Game.chess.offsetLeft + document.documentElement.scrollLeft;
+                var z = ev.clientY - Game.chess.offsetTop + document.documentElement.scrollTop;
+                var x = parseInt(s / 50);
+                var y = parseInt(z / 50);
+                if (Game.isSet) {
+                    Game.pcSetChess(x, y, Game.mainColor, true);
+                }
+            }
+        }
+
+        function gameRegret() {
+            if (!Game.isSet) {
+                var data = { notice: "对象想要悔棋!", regret: true }
+                socket.emit('sendRegretNotice', data);
+            }
+        }
+
+        function gameRefresh() {
+            var bg = document.getElementById("mybg");
+            if (bg !== null) {
+                bg.parentNode.removeChild(bg);
+            }
+            var data = { notice: "对方不服，再来一局!", regret: false }
+            socket.emit('sendRegretNotice', data);
+            // location.reload()
+        }
+
+        socket.on('receiveCommond', function (data) {
+            if (data.color == Game.mainColor) {
+                if (data.color == "black") {
+                    Game.mainColor = "white";
+                }
+            }
+            Game.pcSetChess(data.x, data.y, data.color, false);
+        })
+
+        socket.on('regretNotice', function (data) {
+            Game.regretNotice(data);
+        })
+
+        socket.on('regretCommond', function (data) {
+            Game.regret(false);
+        })
+
+        socket.on('refreshCommond', function () {
+            Game.refresh();
+        })
+
+        socket.on('Notice', function (data) {
+            alert(data);
+        })
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <style>
+        * {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        body {
+            background: #333;
+        }
+
+        #wrap {
+            margin: 50px auto 20px;
+            background: url('img/block.gif');
+            border: 10px solid rgb(50, 205, 50);
+            position: relative;
+        }
+
+        #wrap div {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            transition: 0.3s;
+        }
+
+        #wrap div img {
+            position: absolute;
+        }
+
+        #wrap div.wall img {
+            bottom: 0px;
+        }
+
+        #wrap div.box img {
+            bottom: 0px;
+        }
+
+        #wrap div.ball img {
+            left: 50%;
+            top: 50%;
+            margin-left: -15px;
+            margin-top: -15px;
+        }
+
+        #wrap div.person img {
+            left: 50%;
+            bottom: 0;
+            margin-left: -25px;
+        }
+
+        .function {
+            width: 580px;
+            height: 40px;
+            position: absolute;
+            left: 50%;
+            margin-left: -290px;
+        }
+
+        .function a {
+            text-decoration: none;
+            display: block;
+            float: left;
+            width: 80px;
+            height: 35px;
+            border-radius: 3px;
+            margin: 0 5px 0;
+            text-align: center;
+            font: 16px/35px 'Microsoft yahei';
+            box-shadow: 4px 0 4px rgba(0, 0, 0, 0.5), 0 4px 4px rgba(0, 0, 0, 0.5);
+            background: rgba(50, 205, 50, 1);
+            color: #fff;
+        }
+
+        .function a#stepNum {
+            width: 120px;
+        }
+
+        .function span {
+            color: red;
+            font-weight: bold;
+            margin: 0 8px;
+        }
+    </style>
+    <div id="wrap"></div>
+</body>
+<script>
+    window.onload = function () {
+        Game.exe();
+    }
+
+    Game = {
+        mapdata: [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0,
+            0, 0, 0, 0, 1, 1, 1, 3, 0, 3, 0, 2, 1, 0, 0, 0,
+            0, 0, 0, 0, 1, 2, 0, 3, 4, 1, 1, 1, 1, 0, 0, 0,
+            0, 0, 0, 0, 1, 1, 1, 1, 3, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ],
+        owrap: document.getElementById("wrap"),
+        //初始化坐标
+        size: { x: 16, y: 16 },
+        exe: function () {
+            var This = Game;
+            //设置地图大小
+            this.owrap.style.cssText = 'width:' + this.size.x * 35 + 'px;height:' + this.size.y * 35 + 'px';
+            this.map(this.mapdata);
+        },
+
+        map: function (mapdata) {
+            var This = Game;
+            this.owrap.innerHtml = '';
+            var oDiv, oImg, oPerson;
+            for (var i = 0; i < this.size.x * this.size.y; i++) {
+                var x = i % 16;
+                var y = parseInt(i / 16);
+                switch (mapdata[i]) {
+                    case 1:
+                        addElement();
+                        oDiv.className = 'wall';
+                        oImg.src = 'img/wall.png';
+                        break;
+                    case 2:
+                        addElement();
+                        oDiv.className = 'ball';
+                        oImg.src = 'img/ball.png';
+                        oDiv.style.zIndex = 0;
+                        break;
+                    case 3:
+                        addElement();
+                        oDiv.className = 'box';
+                        oImg.src = 'img/box.png';
+                        break;
+                    case 4:
+                        addElement();
+                        oDiv.className = 'person';
+                        oImg.src = 'img/down.png';
+                        oPerson = oImg;
+                        break;
+                }
+            }
+
+            function addElement() {
+                var This = Game;
+                oDiv = document.createElement("div");
+                oDiv.x = x;
+                oDiv.y = y;
+                oDiv.style.cssText = 'top:' + y * 35 + 'px;left:' + x * 35 + 'px;z-index:' + y * This.size.x + ';';
+                oImg = new Image();
+                oDiv.appendChild(oImg);
+                This.owrap.appendChild(oDiv);
+            }
+            This.controlPerson(oPerson);
+        },
+
+        controlPerson: function (oPerson) {
+            var This = this;
+            var op = oPerson.parentNode;
+            document.onkeydown = function (ev) {
+                var ev = ev || window.event;
+                var keyCode = ev.keyCode;
+                switch (keyCode) {
+                    case 37:
+                        oPerson.src = "img/left.png";
+                        This.personMove({ x: -1 }, op)
+                        break;
+                    case 38:
+                        oPerson.src = "img/up.png";
+                        This.personMove({ y: -1 }, op)
+                        break;
+                    case 39:
+                        oPerson.src = "img/right.png";
+                        This.personMove({ x: 1 }, op)
+                        break;
+                    case 40:
+                        oPerson.src = "img/down.png";
+                        This.personMove({ y: 1 }, op)
+                        break;
+                }
+            }
+        },
+
+        personMove: function (data, op) {
+            var This = Game;
+            var x = data.x || 0;
+            var y = data.y || 0;
+            var boxArr = This.getClass('box');
+            //在判断移动后的位置在数组中是否是树
+            if (This.mapdata[(op.x + x) + (op.y + y) * this.size.x] != 1) {
+                op.x = op.x + x;
+                op.y = op.y + y;
+                op.style.top = op.y * 35 + 'px';
+                op.style.left = op.x * 35 + 'px';
+                op.style.zIndex = op.x + op.y * this.size.x;
+                for (var i = 0; i < boxArr.length; i++) {
+                    //如果人的位置和箱子的位置重合
+                    if (boxArr[i].x == op.x && boxArr[i].y == op.y) {
+                        //判断箱子移动后是否和树的位置重合
+                        if (This.mapdata[(boxArr[i].x + x) + (boxArr[i].y + y) * this.size.x] != 1) {
+                            boxArr[i].x = boxArr[i].x + x;
+                            boxArr[i].y = boxArr[i].y + y;
+                            boxArr[i].style.top = boxArr[i].y * 35 + 'px';
+                            boxArr[i].style.left = boxArr[i].x * 35 + 'px';
+                            boxArr[i].style.zIndex = boxArr[i].x + boxArr[i].y * this.size.x;
+                            //检测是否通关
+                            This.passGame();
+                        } else {
+                            //如果箱子背后是树,无法推动则人物后退
+                            op.style.top = (op.y - y) * 35 + 'px';
+                            op.style.left = (op.x - x) * 35 + 'px';
+                            op.style.zIndex = (op.x - x) + (op.y - y) * this.size.x;
+                        }
+                    }
+                }
+            }
+        },
+        controlMove: function (obj, x, y) {
+            obj.style.top = y * 35 + 'px';
+            obj.style.left = x * 35 + 'px';
+            obj.style.zIndex = x + y * this.size.x;
+        },
+
+        passGame: function () {
+            var This = Game;
+            var num = 0;
+            var obox = This.getClass("box");
+            for (var i = 0; i < obox.length; i++) {
+                if (This.mapdata[(obox[i].x) + (obox[i].y) * this.size.x] == 2) {
+                    num++;
+                    if (num == obox.length) {
+                        alert("恭喜通关")
+                    }
+                }
+            }
+        },
+
+        boxCollision: function (x,y) {
+            var obox = getClass("box");
+            for (var i = 0; i < obox.length; i++) {
+                if(obox[i].x==x&&obox.y==y){
+                    return true;
+                }
+            }
+        },
+
+        getClass: function (className) {
+            return document.getElementsByClassName(className);
+        }
+    }
+
+</script>
+
+</html>

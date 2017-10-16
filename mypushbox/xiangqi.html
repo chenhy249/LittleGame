@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <style>
+        #peripheral {
+            margin: 20px auto 50px;
+            width: 770px;
+            height: 850px;
+            background: url("img/background.png");
+            position: relative;
+            box-shadow: -2px -2px 2px #EFEFEF, 5px 5px 5px #B9B9B9;
+            /* box-shadow: -2px -2px 2px #EFEFEF, 5px 5px 5px #B9B9B9; */
+            z-index: 0
+        }
+
+        #Chess {
+            width: 720px;
+            height: 800px;
+            background: url("img/xiangqi/xiangqipan.jpg");
+            position: absolute;
+            margin: 25px 25px;
+        }
+
+        .RedShi {
+            background: url("img/xiangqi/RedShi.png");
+        }
+
+        .RedXiang {
+            background: url("img/xiangqi/RedXiang.png");
+        }
+
+        .RedMa {
+            background: url("img/xiangqi/RedMa.png");
+        }
+
+        .RedJu {
+            background: url("img/xiangqi/RedJu.png");
+        }
+
+        .RedShuai {
+            background: url("img/xiangqi/RedShuai.png");
+        }
+
+        .RedPao {
+            background: url("img/xiangqi/RedPao.png");
+        }
+
+        .RedBing {
+            background: url("img/xiangqi/RedBing.png");
+        }
+
+        .BlackShuai {
+            background: url("img/xiangqi/BlackShuai.png");
+        }
+
+        .BlackShi {
+            background: url("img/xiangqi/BlackShi.png");
+        }
+
+        .BlackXiang {
+            background: url("img/xiangqi/BlackXiang.png");
+        }
+
+        .BlackMa {
+            background: url("img/xiangqi/BlackMa.png");
+        }
+
+        .BlackJu {
+            background: url("img/xiangqi/BlackJu.png");
+        }
+
+        .BlackPao {
+            background: url("img/xiangqi/BlackPao.png");
+        }
+
+        .BlackBing {
+            background: url("img/xiangqi/BlackBing.png");
+        }
+    </style>
+    <div id="peripheral">
+        <div id="Chess">
+        </div>
+    </div>
+</body>
+<script>
+    var setChess = true;
+    var chessMove = undefined;
+    window.onload = function () {
+        Game.layout();
+        playGame();
+    }
+
+    Game = {
+        chessman: [],
+        interval: 0,
+        star: undefined,
+        end: undefined,
+        className: "",
+        setChess: true,
+        step: [
+            5, 4, 3, 2, 1, 2, 3, 4, 5,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 6, 0, 0, 0, 0, 0, 6, 0,
+            7, 0, 7, 0, 7, 0, 7, 0, 7,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            7, 0, 7, 0, 7, 0, 7, 0, 7,
+            0, 6, 0, 0, 0, 0, 0, 6, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            5, 4, 3, 2, 1, 2, 3, 4, 5
+        ],
+
+        chessMove: function (obj) {
+            var This = Game;
+            if (This.setChess) {
+                if (isContains(obj.className, "Red")) {
+                    This.star = obj;
+                } else {
+                    if (This.star != undefined) {
+                        This.judge(This.star, obj, "Red");
+                    }
+                }
+            } else {
+                if (isContains(obj.className, "Black")) {
+                    This.star = obj;
+                } else {
+                    if (This.star != undefined) {
+                        This.judge(This.star, obj, "Black");
+                    }
+                }
+            }
+        },
+
+        judge: function (start, end, color) {
+            var oDiv;
+            var This = Game;
+            This.interval = 0;
+            if (isContains(start.className, "Shuai")) {
+                if ((end.x > 3 && end.x < 7) || (end.y > 2 && end.y < 8)) {
+                    return;
+                }
+                if ((start.x == end.x && (start.y + 1 == end.y || start.y - 1 == end.y)) || (start.y == end.y && (start.x + 1 == end || start.x - 1 == end.x))) {
+                    This.move(start, end);
+                }
+            }
+            if (isContains(start.className, "Shi")) {
+                if ((end.x > 3 && end.x < 7) || (end.y > 2 && end.y < 8)) {
+                    return;
+                }
+                if ((end.x == start.x + 1 && (end.y == start.y + 1 || end.y == start.y - 1)) || (end.x == start.x - 1 && (end.y == start.y + 1 || end.y == start.y - 1))) {
+                    This.move(start, end);
+                }
+            }
+            if (isContains(start.className, "Xiang")) {
+                if ((end.x == start.x + 2 && (end.y == start.y + 2 || end.y == start.y - 2)) || (end.x == start.x - 2 && (end.y == start.y + 2 || end.y == start.y - 2))) {
+                    if (end.x == start.x + 2 && end.y == start.y + 2) {
+                        for (var i = 0; i < This.chessman.length; i++) {
+                            if (This.chessman[i].x == start.x + 1 && This.chessman[i].y == start.y + 1) {
+                                This.interval++;
+                            }
+                        }
+                    } else if (end.x == start.x + 2 && end.y == start.y - 2) {
+                        for (var i = 0; i < This.chessman.length; i++) {
+                            if (This.chessman[i].x == start.x + 1 && This.chessman[i].y == start.y - 1) {
+                                This.interval++;
+                            }
+                        }
+                    } else if (end.x == start.x - 2 && end.y == start.y - 2) {
+                        for (var i = 0; i < This.chessman.length; i++) {
+                            if (This.chessman[i].x == start.x - 1 && This.chessman[i].y == start.y - 1) {
+                                This.interval++;
+                            }
+                        }
+                    } else if (end.x == start.x - 2 && end.y == start.y + 2) {
+                        for (var i = 0; i < This.chessman.length; i++) {
+                            if (This.chessman[i].x == start.x - 1 && This.chessman[i].y == start.y + 1) {
+                                This.interval++;
+                            }
+                        }
+                    }
+                    if (This.interval == 0) {
+                        This.move(start, end);
+                    }
+                }
+            }
+            //????
+            if (isContains(start.className, "Ma")) {
+                This.getChessman();
+                if ((end.x == start.x + 1 || end.x == start.x - 1) && end.y == start.y + 2) {
+                    for (var i = 0; i < This.chessman.length; i++) {
+                        if (This.chessman[i].x == start.x && This.chessman[i].y == start.y + 1) {
+                            This.interval++;
+                            break;
+                        }
+                    }
+                } else if ((end.x == start.x + 1 || end.x == start.x - 1) && end.y == start.y - 2) {
+                    for (var i = 0; i < This.chessman.length; i++) {
+                        if (This.chessman[i].x == start.x && This.chessman[i].y == start.y - 1) {
+                            This.interval++;
+                            break;
+                        }
+                    }
+                } else if ((end.y == start.y + 1 || end.y == start.y - 1) && end.x == start.x + 2) {
+                    for (var i = 0; i < This.chessman.length; i++) {
+                        if (This.chessman[i].y == start.y && This.chessman[i].x == start.x + 1) {
+                            This.interval++;
+                            break;
+                        }
+                    }
+                } else if ((end.y == start.y + 1 || end.y == start.y - 1) && end.x == start.x - 2) {
+                    for (var i = 0; i < This.chessman.length; i++) {
+                        if (This.chessman[i].y == start.y && This.chessman[i].x == start.x - 1) {
+                            This.interval++;
+                            break;
+                        }
+                    }
+                } else {
+                    return;
+                }
+                if (This.interval == 0) {
+                    This.move(start, end);
+                }
+            }
+            //????
+            if (isContains(start.className, "Ju")) {
+                if (start.x == end.x || start.y == end.y) {
+                    This.getChessman();
+                    for (var i = 0; i < This.chessman.length; i++) {
+                        if (start.x == end.x && start.x == This.chessman[i].x) {
+                            if ((start.y - end.y > start.y - This.chessman[i].y && start.y - This.chessman[i].y > 0) || (start.y - end.y < start.y - This.chessman[i].y && start.y - This.chessman[i].y < 0)) {
+                                This.interval++;
+                            }
+                        }
+                        if (start.y == end.x && start.y == This.chessman[i].y) {
+                            if ((start.x - end.x > start.x - This.chessman[i].x && start.x - This.chessman[i].x > 0) || (start.x - end.x < start.x - This.chessman[i].x && start.x - This.chessman[i].x < 0)) {
+                                This.interval++;
+                            }
+                        }
+                    }
+
+                    if (This.interval == 0) {
+                        This.move(start, end);
+                    }
+                }
+            }
+            //????
+            if (isContains(start.className, "Pao")) {
+                if (start.x !== end.x && start.y !== end.y) {
+                    return;
+                }
+                This.getChessman();
+                for (var i = 0; i < This.chessman.length; i++) {
+                    if (start.x == end.x && start.x == This.chessman[i].x) {
+                        if ((start.y - end.y > start.y - This.chessman[i].y && start.y - This.chessman[i].y > 0) || (start.y - end.y < start.y - This.chessman[i].y && start.y - This.chessman[i].y < 0)) {
+                            This.interval++;
+                        }
+                    }
+                    if (start.y == end.y && start.y == This.chessman[i].y) {
+                        if ((start.x - end.x > start.x - This.chessman[i].x && start.x - This.chessman[i].x > 0) || (start.x - end.x < start.x - This.chessman[i].x && start.x - This.chessman[i].x < 0)) {
+                            This.interval++;
+                        }
+                    }
+                }
+
+                if (!isContains(end.className, "Red") && !isContains(end.className, "Black")) {
+                    if (This.interval == 0) {
+                        This.move(start, end);
+                    }
+                } else if (isContains(end.className, "Black")) {
+                    if (This.interval == 1) {
+                        This.move(start, end);
+                    }
+                }
+            }
+            //????
+            if (isContains(start.className, "Bing")) {
+                if (start.x !== end.x && start.y !== end.y) {
+                    return;
+                }
+                if ((start.x == end.x && start.y + 1 == end.y) || (start.y > 4 && start.y == end.y && (start.x + 1 == end.x || start.x - 1 == end.x))) {
+                    This.move(start, end);
+                    var shuai = document.getElementByClassName(color + "Shuai");
+                    if ((start.x == shuai.x && start.y + 1 == shuai.y) || (start.y == shuai.y && (start.x + 1 == shuai.x || start.x - 1 == shuai.x))) {
+                        alert("??");
+                    }
+                }
+            }
+        },
+
+        getChessman: function () {
+            var This = Game;
+            This.chessman = [];
+            var chessmanChild = document.getElementsByClassName("chessman");
+            for (var i = 0; i < chessmanChild.length; i++) {
+                var theChessman = chessmanChild[i].parentNode;
+                console.log(theChessman.x + "=============" + theChessman.y);
+                This.chessman.push(theChessman);
+            }
+            console.log(This.chessman);
+        },
+
+        move: function (start, end) {
+            var chessmanChildNode = start.children[0];
+            if (!isContains(end.className, "Red") && !isContains(end.className, "Black")) {
+                end.appendChild(chessmanChildNode);
+            } else {
+                start.removeChild(chessmanChildNode);
+            }
+            end.className = start.className;
+            start.className = "";
+        },
+
+        layout: function () {
+            var This = Game;
+            for (var i = 0; i < This.step.length; i++) {
+                var oDiv;
+                var x = i % 9;
+                var y = parseInt(i / 9);
+                addElement();
+                if (i < This.step.length / 2) {
+                    switch (This.step[i]) {
+                        case 1:
+                            oDiv.className = "RedShuai";
+                            addChildElement();
+                            break;
+                        case 2:
+                            oDiv.className = "RedShi";
+                            addChildElement();
+                            break;
+                        case 3:
+                            oDiv.className = "RedXiang";
+                            addChildElement();
+                            break;
+                        case 4:
+                            oDiv.className = "RedMa";
+                            addChildElement();
+                            break;
+                        case 5:
+                            oDiv.className = "RedJu";
+                            addChildElement();
+                            break;
+                        case 6:
+                            oDiv.className = "RedPao";
+                            addChildElement();
+                            break;
+                        case 7:
+                            oDiv.className = "RedBing";
+                            addChildElement();
+                            break;
+                    }
+                } else {
+                    switch (This.step[i]) {
+                        case 1:
+                            oDiv.className = "BlackShuai";
+                            addChildElement();
+                            break;
+                        case 2:
+                            oDiv.className = "BlackShi";
+                            addChildElement();
+                            break;
+                        case 3:
+                            oDiv.className = "BlackXiang";
+                            addChildElement();
+                            break;
+                        case 4:
+                            oDiv.className = "BlackMa";
+                            addChildElement();
+                            break;
+                        case 5:
+                            oDiv.className = "BlackJu";
+                            addChildElement();
+                            break;
+                        case 6:
+                            oDiv.className = "BlackPao";
+                            addChildElement();
+                            break;
+                        case 7:
+                            oDiv.className = "BlackBing";
+                            addChildElement();
+                            break;
+                    }
+                }
+            }
+            function addElement() {
+                oDiv = document.createElement("Div");
+                oDiv.style.cssText = "top:" + y * 80 + "px;left:" + x * 80 + "px;width:80px;height:80px;position:absolute;"
+                oDiv.x = x;
+                oDiv.y = y;
+                var wrap = document.getElementById("Chess");
+                wrap.appendChild(oDiv);
+            }
+
+            function addChildElement() {
+                var childDiv = document.createElement("div");
+                childDiv.className = "chessman";
+                oDiv.appendChild(childDiv);
+            }
+        },
+
+        addChildElements: function (obj) {
+            var childDiv = document.createElement("div");
+            childDiv.className = "chessman";
+            obj.appendChild(childDiv);
+        }
+    }
+
+    function playGame() {
+        var owrap = document.getElementById("Chess");
+        owrap.onmousedown = function (ev) {
+            var ev = ev || window.event;
+            var target = ev.target || ev.srcElement;
+            console.log(target.x + "=============" + target.y);
+            Game.chessMove(target);
+        }
+    }
+
+    function isContains(str, key) {
+        return str.indexOf(key) >= 0;
+    }
+
+</script>
+
+</html>
